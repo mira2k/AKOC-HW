@@ -66,10 +66,10 @@ int make_new_dir (char* path, char* name, char* new_path)
         if(buff[strlen(buff)-1]=='/')
         {
             /*printf("\n bfr cpy name[%s]\n",buff);*/
-            
+            int z = 0;
             end_ptr += strlen(buff);
             strcpy(end_ptr, name);
-            int z = strlen(buff);
+            z = strlen(buff);
             buff[z] = '/';
             ++z;
             buff[z] = '\0';
@@ -139,6 +139,8 @@ int file_to_file (const char* src, const char* dst)
     int destFD;
     int nb_read;
     char *buff[BUFF_SIZE];
+    struct stat src_st;
+    
     srcFD = open(src,O_RDONLY);
  
     if(srcFD == -1)
@@ -181,12 +183,10 @@ int file_to_file (const char* src, const char* dst)
         printf("\nError in closing file %s\n",dst);
         return EBADMD;
     }
-    struct stat src_st;
     if (stat(src, &src_st) < 0)
         return ECHMOD;
     if (chmod(dst, src_st.st_mode) < 0)
         return ECHMOD;
-    return 0;
     return EOK;
 }
 
@@ -292,18 +292,19 @@ int rec_dir_cp(char* source, char* dest, char* name)
 
 int main(int argc, char** argv)
 {
+    char* name;
+    int err = EOK;
     if (argc < 3) 
     {
         printf("\nrcp: \nInput format: 'source directory path, destination directory path'\n");
         printf("\nNotice that only absolute pathnames are allowed\n");
         return ENOARG;
     }
-    char* name = get_dir_name(argv[1]);
+    name = get_dir_name(argv[1]);
     if (name == NULL)
         return EMALLOC;
-    int err = rec_dir_cp(argv[1], argv[2], name);
+    err = rec_dir_cp(argv[1], argv[2], name);
     free(name);
-    
     if (err)
         return err;
     return 0;
