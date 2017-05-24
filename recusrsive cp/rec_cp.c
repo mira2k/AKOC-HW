@@ -42,56 +42,56 @@ int is_dir(const char* path, int mode)
 
 int make_new_dir (char* path, char* name, char* new_path)
 {
-	 
-	 char buff[PATH_MAX];
-	 
-	 DIR *dp = NULL;
-	 strcpy(buff, path);
-	 char *end_ptr = buff;
-	 
-	 if (NULL == (dp = opendir(path)) )
+     
+     char buff[PATH_MAX];
+     
+     DIR *dp = NULL;
+     strcpy(buff, path);
+     char *end_ptr = buff;
+     
+     if (NULL == (dp = opendir(path)) )
      {
-		
+        
         printf("\n Cannot open Input directory [%s]\n",path);
         return ENOTDIR;
      }
      
      else
      {
-		//printf("\n name[%s]\n",name);
-		//printf("\n name[%s]\n",buff); 
+        //printf("\n name[%s]\n",name);
+        //printf("\n name[%s]\n",buff); 
         if(buff[strlen(buff)-1]=='/')
         {
-			//printf("\n bfr cpy name[%s]\n",buff);
-			
+            //printf("\n bfr cpy name[%s]\n",buff);
+            
             end_ptr += strlen(buff);
             strcpy(end_ptr, name);
             int z = strlen(buff);
-			buff[z] = '/';
-			++z;
-			buff[z] = '\0';
-			//printf("\n aftr cpy buff[%s]\n",buff);
+            buff[z] = '/';
+            ++z;
+            buff[z] = '\0';
+            //printf("\n aftr cpy buff[%s]\n",buff);
         }
         else
         {
-			
-			int z = strlen(buff);
-			buff[z] = '/';
-			end_ptr += strlen(buff);
-			strcpy(end_ptr, name);
-			z = strlen(buff);
-			buff[z] = '/';
-			++z;
-			buff[z] = '\0';
+            
+            int z = strlen(buff);
+            buff[z] = '/';
+            end_ptr += strlen(buff);
+            strcpy(end_ptr, name);
+            z = strlen(buff);
+            buff[z] = '/';
+            ++z;
+            buff[z] = '\0';
         }
 
         //printf("\n Creating a new directory [%s]\n", buff);
         mkdir(buff,S_IRWXU|S_IRWXG|S_IRWXO);
         
         strcpy(new_path, buff);
-		
+        
         return EOK;
-	}
+    }
 }
 
 
@@ -102,89 +102,90 @@ char* get_dir_name(const char* dir_path)
     int i = strlen(dir_path) - 1;
     if (dir_path[i] == '/') 
     {
-		--i;
-		has_slash = 1;
-	}
+        --i;
+        has_slash = 1;
+    }
     while ((i >= 0) && (dir_path[i] != '/'))
     {
-		--i;
-		++count;
-	}
-	buf = (char*) malloc (count* sizeof(char));
-	if (buf == NULL)
-	{
-		printf ("Bad malloc(((");
-		return NULL;
-	}
-	count = 0;
-	for (++i; i < strlen(dir_path) - has_slash; ++i)
-	{
-		buf[count] = dir_path[i];
-		++count;
-	}
+        --i;
+        ++count;
+    }
+    buf = (char*) malloc (count + 1);
+    if (buf == NULL)
+    {
+        printf ("Bad malloc(((");
+        return NULL;
+    }
+    count = 0;
+    for (++i; i < strlen(dir_path) - has_slash; ++i)
+    {
+        buf[count] = dir_path[i];
+        ++count;
+    }
+    buf[strlen(dir_path) - has_slash] = '\0';
     return buf;
 }
 
 
 int file_to_file (const char* src, const char* dst) 
 {
-	int srcFD;
-	int destFD;
-	int nb_read;
-	char *buff[BUFF_SIZE];
-	srcFD = open(src,O_RDONLY);
+    int srcFD;
+    int destFD;
+    int nb_read;
+    char *buff[BUFF_SIZE];
+    srcFD = open(src,O_RDONLY);
  
-	if(srcFD == -1)
-	{
-		printf("\nError opening file %s\n", src);
-		return EBADMD;	
-	}
-	destFD = open(dst,O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | 
-	S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+    if(srcFD == -1)
+    {
+        printf("\nError opening file %s\n", src);
+        return EBADMD;  
+    }
+    destFD = open(dst,O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | 
+    S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
  
-	if(destFD == -1)
-	{
-		printf("\nError opening file %s \n",dst);
-		return EBADMD;
-	}
+    if(destFD == -1)
+    {
+        printf("\nError opening file %s \n",dst);
+        return EBADMD;
+    }
  
-	/*Start data transfer from src file to dest file till it reaches EOF*/
-	while((nb_read = read(srcFD,buff,BUFF_SIZE)) > 0)
-	{
-		if(write(destFD,buff,nb_read) != nb_read)
-			return EBADMD;
-	}
-	
-	if(nb_read == -1) 
-	{
-		printf("\nError in reading data from %s\n",src);
-		return EBADMD;
-	}
-	
-	if(close(srcFD) == -1) 
-	{
-		printf("\nError in closing file %s\n",src);
-		return EBADMD;
-	}
-		
+    /*Start data transfer from src file to dest file till it reaches EOF*/
+    while((nb_read = read(srcFD,buff,BUFF_SIZE)) > 0)
+    {
+        if(write(destFD,buff,nb_read) != nb_read)
+            return EBADMD;
+    }
+    
+    if(nb_read == -1) 
+    {
+        printf("\nError in reading data from %s\n",src);
+        return EBADMD;
+    }
+    
+    if(close(srcFD) == -1) 
+    {
+        printf("\nError in closing file %s\n",src);
+        return EBADMD;
+    }
+        
  
-	if(close(destFD) == -1)
-	{
-		printf("\nError in closing file %s\n",dst);
-		return EBADMD;
-	}
+    if(close(destFD) == -1)
+    {
+        printf("\nError in closing file %s\n",dst);
+        return EBADMD;
+    }
  
-	return EOK;
+    return EOK;
 }
 
 int rec_dir_cp(char* source, char* dest, char* name)
 {
-	
-	char new_dest[PATH_MAX];
-	int err = make_new_dir(dest, name, new_dest);
-	
-	if (err != EOK) return err;
-	DIR *dir = opendir(source); //Assuming absolute pathname here.
+    
+    char new_dest[PATH_MAX];
+    int err = make_new_dir(dest, name, new_dest);
+    
+    if (err != EOK) return err;
+    DIR *dir = opendir(source); //Assuming absolute pathname here.
     if (dir == NULL) return ENOTDIR;
     
     char Path[PATH_MAX], *EndPtr = Path;
@@ -197,19 +198,19 @@ int rec_dir_cp(char* source, char* dest, char* name)
     while((e = readdir(dir)) != NULL) //Iterates through the entire directory.
     {  
         struct stat info;     
-		char f[strlen(e->d_name)* sizeof(char) + strlen(Path) + 3];
-		sprintf(f, "%s/%s", Path, e->d_name);
+        char f[strlen(e->d_name)* sizeof(char) + strlen(Path) + 3];
+        sprintf(f, "%s/%s", Path, e->d_name);
         //printf("\n rdc: let's see what %s file hides\n", f);      
         if(!stat(f, &info))
         {
-			char e_name[PATH_MAX];
-			strcpy(e_name, e->d_name);
-			e_name[strlen(e_name)] = '\0';
-			
+            char e_name[PATH_MAX];
+            strcpy(e_name, e->d_name);
+            e_name[strlen(e_name)] = '\0';
+            
             if(is_dir(f, 256)) //Are we dealing with a directory?
             { 
-				if (e_name[0] != '.')
-					rec_dir_cp(f, new_dest, e_name); //Calls this function AGAIN, this time with the sub-name. 
+                if (e_name[0] != '.')
+                    rec_dir_cp(f, new_dest, e_name); //Calls this function AGAIN, this time with the sub-name. 
             } 
             
             else if (S_ISREG(info.st_mode) )//Or did we find a regular file?
@@ -217,30 +218,30 @@ int rec_dir_cp(char* source, char* dest, char* name)
                 char ff[PATH_MAX];
                 //printf("\ndest directory %s\n ",new_dest);
                 sprintf(ff, "%s%s", new_dest, e_name);
-				//printf("\ndest %s\n", ff);
+                //printf("\ndest %s\n", ff);
                 if ((e_name)[0] != '.')
-					file_to_file(f, ff);
-			}
-			
-		}
+                    file_to_file(f, ff);
+            }
+            
+        }
     }
     closedir(dir);
     return EOK;
 }
 
 int main(int argc, char** argv) {
-	if (argc < 3) {
-		printf("not enough args\n");
-		return ENOARG;
-	}
-	
-	char* name = get_dir_name(argv[1]);
-	if (name == NULL)
-		return EMALLOC;
-	int err = rec_dir_cp(argv[1], argv[2], name);
-	free(name);
-	if (err)
-		return err;
-	return 0;
+    if (argc < 3) {
+        printf("not enough args\n");
+        return ENOARG;
+    }
+    
+    char* name = get_dir_name(argv[1]);
+    if (name == NULL)
+        return EMALLOC;
+    int err = rec_dir_cp(argv[1], argv[2], name);
+    free(name);
+    if (err)
+        return err;
+    return 0;
 }
 	
