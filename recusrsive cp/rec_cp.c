@@ -231,23 +231,48 @@ int rec_dir_cp(char* source, char* dest, char* name)
     return control;
 }
 
+int eq_dirs(char* src, char* dst) {
+	size_t src_l = strlen(src);
+	size_t dst_l = strlen(dst);
+	if (src_l > dst_l)
+		return 0;
+	if (dst_l == src_l)
+		if (strcmp(dst, src) == 0)
+			return 1;
+	if (dst_l > src_l)
+	{
+		int i = 0;
+		for(;i < src_l; ++i)
+			if (src[i] != dst[i])
+				return 0;
+		if (dst[strlen(src)] == '/')
+			return 1;
+	}
+	return 0;
+}
+
 int main(int argc, char** argv)
 {
-	char* name;
 	int err;
-    if (argc < 3) 
-    {
-        printf("\nrcp: \nInput format: 'source directory path, destination directory path'\n");
-        printf("\nNotice that only absolute pathnames are allowed\n");
-        return ENOARG;
-    }
-    name = get_dir_name(argv[1]);
-    if (name == NULL)
-        return EMALLOC;
-    err = rec_dir_cp(argv[1], argv[2], name);
-    free(name);
-    
-    if (err)
-        return err;
-    return 0;
+	char* name;
+	if (argc <= 2) 
+	{
+		printf("\nrcp: \nInput format: 'source directory path, destination directory path'\n");
+		printf("\nNotice that only absolute pathnames are allowed\n");
+		return ENOARG;
+	}
+	if (eq_dirs(argv[1], argv[2]))
+	{
+		printf("\nInvalid directories\n");
+		return ENOARG;
+	}
+	name = get_dir_name(argv[1]);
+	if (name == NULL)
+		return EMALLOC;
+	err = rec_dir_cp(argv[1], argv[2], name);
+	free(name);
+	
+	if (err)
+		return err;
+	return 0;
 }
