@@ -1,5 +1,5 @@
+
 #include <stdio.h>
-#include <limits.h>
 #include <string.h> 
 #include <stdlib.h>
 #include <unistd.h>
@@ -20,36 +20,21 @@
 #define USE_STAT  256
 #define USE_LSTAT 257
 #define BUFF_SIZE 1024
+#define PATH_MAX  4096
 
 #define WRITE_MODE O_WRONLY | O_CREAT | O_TRUNC
 #define PERM_MODE_1 S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 #define PERM_MODE_2 S_IRWXU|S_IRWXG|S_IRWXO
 /* only absolute pathnames are allowed, sorry*/
 
-int is_dir(const char* path, int mode)
-{
-    struct stat st;
-    switch(mode)
-    {
-    case USE_STAT:
-        stat(path, &st);
-        break;
-    case USE_LSTAT:
-        lstat(path, &st);
-        break;
-    default:
-        exit(EBADMD);
-
-    }
-    return (int)((st.st_mode & S_IFMT) == S_IFDIR);
-}
 
 int make_new_dir (char* path, char* name, char* new_path)
 {
      char buff[PATH_MAX];
      char *end_ptr;
+     DIR *dp;
      buff[0] = '\0';
-     DIR *dp = NULL;
+     dp = NULL;
      strcpy(buff, path);
      buff[strlen(path)] = '\0';
      end_ptr = buff;
@@ -66,7 +51,7 @@ int make_new_dir (char* path, char* name, char* new_path)
         if(buff[strlen(buff)-1]=='/')
         {
             /*printf("\n bfr cpy name[%s]\n",buff);*/
-            int z = 0;
+            int z;
             end_ptr += strlen(buff);
             strcpy(end_ptr, name);
             z = strlen(buff);
@@ -140,7 +125,6 @@ int file_to_file (const char* src, const char* dst)
     int nb_read;
     char *buff[BUFF_SIZE];
     struct stat src_st;
-    
     srcFD = open(src,O_RDONLY);
  
     if(srcFD == -1)
@@ -183,53 +167,16 @@ int file_to_file (const char* src, const char* dst)
         printf("\nError in closing file %s\n",dst);
         return EBADMD;
     }
+    
     if (stat(src, &src_st) < 0)
         return ECHMOD;
     if (chmod(dst, src_st.st_mode) < 0)
         return ECHMOD;
+    return 0;
     return EOK;
 }
 
-int handle_symlinks (char* f, char* ff, char* e_name)
-{   
-    struct stat info;
-    char * link;
-    int r_link;
-    link = NULL;
-    if (lstat(f, &info))
-    {
-        if (link != NULL) free(link);
-        return EBADMD;
-    }
-    
-    link = (char*)malloc(info.st_size + 1);
-    if (link == NULL)
-    {
-        if (link != NULL) free(link);
-        return EMALLOC;
-    }
-    
-    r_link = readlink(f, link, info.st_size + 1);
-    if (r_link < 0)
-    {
-    
-        if (link != NULL) free(link);
-        return EBADMD;
-    }
-    link[info.st_size] = '\0';
-    
-    if (symlink(link ,ff) == -1)
-    {
-        if (link != NULL)
-        free(link);
-        return EBADMD;
-    }
-    
-    if (link != NULL)
-        free(link);
 
-    return EOK;
-}
 
 int rec_dir_cp(char* source, char* dest, char* name)
 {
@@ -238,10 +185,11 @@ int rec_dir_cp(char* source, char* dest, char* name)
     int err;
     int control = EOK;
     char Path[PATH_MAX];
+    DIR *dir;
     struct dirent *e;
     err = make_new_dir(dest, name, new_dest);
     if (err != EOK) return err;
-    DIR *dir = opendir(source);
+    dir = opendir(source);
     /*Assuming absolute pathname here.*/
     if (dir == NULL) return ENOTDIR;
     strcpy(Path, source);  
@@ -251,7 +199,7 @@ int rec_dir_cp(char* source, char* dest, char* name)
     /*Iterates through the entire directory.*/
     {  
         struct stat info;     
-        char f[(strlen(e->d_name) + strlen(Path) + 3)];
+        char f[PATH_MAX];
         int res = EOK;
         sprintf(f, "%s/%s", Path, e->d_name);
         if(!stat(f, &info))
@@ -260,7 +208,7 @@ int rec_dir_cp(char* source, char* dest, char* name)
             strcpy(e_name, e->d_name);
             e_name[strlen(e_name)] = '\0';
             
-            if(is_dir(f, 256))
+            if(S_ISDIR(info.st_mode))
             { 
                 if (e_name[0] != '.')
                     res = rec_dir_cp(f, new_dest, e_name);
@@ -277,13 +225,6 @@ int rec_dir_cp(char* source, char* dest, char* name)
                 }
                 control = res;
             }
-            else if (S_ISLNK(info.st_mode)) {
-                char ff[PATH_MAX];
-                sprintf(ff, "%s%s", new_dest, e_name);
-                ff[strlen(ff)] = '\0';
-                res = handle_symlinks(f, ff, e_name);
-                control = res;
-            }
         }
     }
     closedir(dir);
@@ -292,8 +233,8 @@ int rec_dir_cp(char* source, char* dest, char* name)
 
 int main(int argc, char** argv)
 {
-    char* name;
-    int err = EOK;
+	char* name;
+	int err;
     if (argc < 3) 
     {
         printf("\nrcp: \nInput format: 'source directory path, destination directory path'\n");
@@ -305,6 +246,7 @@ int main(int argc, char** argv)
         return EMALLOC;
     err = rec_dir_cp(argv[1], argv[2], name);
     free(name);
+    
     if (err)
         return err;
     return 0;
