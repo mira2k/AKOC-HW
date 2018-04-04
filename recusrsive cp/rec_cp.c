@@ -51,26 +51,26 @@ int make_new_dir (char* path, char* name, char* new_path)
         if(buff[strlen(buff)-1]=='/')
         {
             /*printf("\n bfr cpy name[%s]\n",buff);*/
-            int z;
+            int len;
             end_ptr += strlen(buff);
             strcpy(end_ptr, name);
-            z = strlen(buff);
-            buff[z] = '/';
-            ++z;
-            buff[z] = '\0';
+            len = strlen(buff);
+            buff[len] = '/';
+            ++len;
+            buff[len] = '\0';
             /*printf("\n aftr cpy buff[%s]\n",buff);*/
         }
         else
         {
-            int z = strlen(buff);
-            buff[z] = '/';
-            buff[z + 1] = '\0';
+            int len = strlen(buff);
+            buff[len] = '/';
+            buff[len + 1] = '\0';
             end_ptr += strlen(buff);
             strcpy(end_ptr, name);
-            z = strlen(buff);
-            buff[z] = '/';
-            ++z;
-            buff[z] = '\0';
+            len = strlen(buff);
+            buff[len] = '/';
+            ++len;
+            buff[len] = '\0';
         }
 
         /*printf("\n Creating a new directory [%s]\n", buff);*/
@@ -178,7 +178,7 @@ int file_to_file (const char* src, const char* dst)
 
 
 
-int rec_dir_cp(char* source, char* dest, char* name)
+int recursive_dir_cp(char* source, char* dest, char* name)
 {
     
     char new_dest[PATH_MAX];
@@ -231,7 +231,7 @@ int rec_dir_cp(char* source, char* dest, char* name)
     return control;
 }
 
-int eq_dirs(char* src, char* dst) {
+int equal_dirs(char* src, char* dst) {
 	size_t src_l = strlen(src);
 	size_t dst_l = strlen(dst);
 	if (src_l > dst_l)
@@ -261,7 +261,7 @@ int main(int argc, char** argv)
 		printf("\nNotice that only absolute pathnames are allowed\n");
 		return ENOARG;
 	}
-	if (eq_dirs(argv[1], argv[2]))
+	if (equal_dirs(argv[1], argv[2]))
 	{
 		printf("\nInvalid directories\n");
 		return ENOARG;
@@ -269,7 +269,7 @@ int main(int argc, char** argv)
 	name = get_dir_name(argv[1]);
 	if (name == NULL)
 		return EMALLOC;
-	err = rec_dir_cp(argv[1], argv[2], name);
+	err = recursive_dir_cp(argv[1], argv[2], name);
 	free(name);
 	
 	if (err)
